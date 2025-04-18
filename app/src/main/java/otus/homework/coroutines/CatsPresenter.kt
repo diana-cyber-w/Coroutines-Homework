@@ -1,24 +1,40 @@
 package otus.homework.coroutines
 
 import android.content.Context
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import java.net.SocketTimeoutException
 
 class CatsPresenter(
     private val catsService: CatsService,
+    private val catsImageService: CatsImageService,
     val context: Context
 ) {
-
     private var _catsView: ICatsView? = null
     private val presenterScope = PresenterScope()
 
     fun onInitComplete() {
+        presenterScope.coroutineContext.cancelChildren()
         presenterScope.launch {
             try {
-                val response = catsService.getCatFact()
+                supervisorScope {
+                    val factDeferred = async { catsService.getCatFact() }
+                    val imageDeferred = async { catsImageService.getCatImage() }
+                    val factResponse = factDeferred.await()
+                    val imageResponse = imageDeferred.await()
 
-                if (response.isSuccessful && response.body() != null) {
-                    _catsView?.populate(response.body()!!)
+                    if (factResponse.isSuccessful && factResponse.body() != null
+                        && imageResponse.isSuccessful && imageResponse.body() != null
+                    ) {
+                        _catsView?.populate(
+                            PresentationFact(
+                                factResponse.body()?.fact,
+                                imageResponse.body()?.get(0)?.imageUrl
+                            )
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 if (e is SocketTimeoutException) {
