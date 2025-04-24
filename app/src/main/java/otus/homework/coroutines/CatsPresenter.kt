@@ -1,8 +1,12 @@
 package otus.homework.coroutines
 
 import android.content.Context
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import java.net.SocketTimeoutException
@@ -13,10 +17,11 @@ class CatsPresenter(
     val context: Context
 ) {
     private var _catsView: ICatsView? = null
-    private val presenterScope = PresenterScope()
+    private val presenterScope =
+        CoroutineScope(Dispatchers.Main + Job() + CoroutineName("CatsCoroutine"))
 
     fun onInitComplete() {
-        presenterScope.coroutineContext.cancelChildren()
+        presenterScope.coroutineContext[Job]?.cancel()
         presenterScope.launch {
             try {
                 supervisorScope {
@@ -25,16 +30,9 @@ class CatsPresenter(
                     val factResponse = factDeferred.await()
                     val imageResponse = imageDeferred.await()
 
-                    if (factResponse.isSuccessful && factResponse.body() != null
-                        && imageResponse.isSuccessful && imageResponse.body() != null
-                    ) {
-                        _catsView?.populate(
-                            PresentationFact(
-                                factResponse.body()?.fact,
-                                imageResponse.body()?.get(0)?.imageUrl
-                            )
-                        )
-                    }
+                    _catsView?.populate(
+                        PresentationFact(factResponse.fact, imageResponse.first().imageUrl)
+                    )
                 }
             } catch (e: Exception) {
                 if (e is SocketTimeoutException) {

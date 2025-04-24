@@ -27,16 +27,9 @@ class CatsViewModel(
             val factResponse = factDeferred.await()
             val imageResponse = imageDeferred.await()
 
-            if (factResponse.isSuccessful && factResponse.body() != null
-                && imageResponse.isSuccessful && imageResponse.body() != null
-            ) {
-                _factState.value = Result.Success(
-                    PresentationFact(
-                        factResponse.body()?.fact,
-                        imageResponse.body()?.get(0)?.imageUrl
-                    )
-                )
-            }
+            _factState.value = Result.Success(
+                PresentationFact(factResponse.fact, imageResponse.first().imageUrl)
+            )
         }
     }
 }

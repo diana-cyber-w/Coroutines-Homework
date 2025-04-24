@@ -9,8 +9,6 @@ import java.net.SocketTimeoutException
 
 class MainActivity : AppCompatActivity() {
 
-//    lateinit var catsPresenter: CatsPresenter
-
     private val diContainer = DiContainer()
 
     private val viewModel: CatsViewModel by viewModels {
@@ -26,9 +24,7 @@ class MainActivity : AppCompatActivity() {
         val view = layoutInflater.inflate(R.layout.activity_main, null) as CatsView
         setContentView(view)
 
-//        catsPresenter = CatsPresenter(diContainer.catsService, diContainer.catsImageservice, this)
         view.viewModel = viewModel
-//        catsPresenter.attachView(view)
         viewModel.onInitComplete()
 
         lifecycleScope.launch {
@@ -49,12 +45,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-//    override fun onStop() {
-//        if (isFinishing) {
-//            catsPresenter.detachView()
-//            catsPresenter.cancel()
-//        }
-//        super.onStop()
-//    }
 }
